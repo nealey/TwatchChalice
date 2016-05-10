@@ -1,0 +1,39 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "dartcatcher@gmail.com",
+    "enableMultiJS": true,
+    "longName": "Twatch Chalice",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/icon",
+                "menuIcon": true,
+                "name": "IMAGE_ICON",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "characterRegex": "[\uf10b]",
+                "file": "fonts/fontawesome-webfont.ttf",
+                "name": "SYMBOLS_64",
+                "targetPlatforms": null,
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Chalice",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "f00033b1-2e6c-490c-a650-99d9399b2163",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
