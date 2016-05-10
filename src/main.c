@@ -11,6 +11,7 @@ static Window *window;
 static Layer *s_bg_layer, *s_hands_layer;
 static TextLayer *s_day_label, *s_bt_label;
 static GColor accent_color;
+static GColor text_color;
 
 static char s_day_buffer[15];
 
@@ -18,6 +19,20 @@ GRect display_bounds;
 GPoint center;
 
 bool bt_connected;
+
+static GColor8 visible_against(GColor8 bg) {
+  uint8_t r = (bg.argb >> 4) & 0b11;
+  uint8_t g = (bg.argb >> 2) & 0b11;
+  uint8_t b = (bg.argb >> 0) & 0b11;
+  uint16_t a = (299*r + 587*g + 114*b);
+  
+  // Counting the perceptive luminance - human eye favors green color... 
+  if (a < 1500) {
+    return GColorWhite;
+  } else {
+    return GColorBlack;
+  }
+}
 
 static GPoint point_of_polar(int32_t theta, int r) {
   GPoint ret = {
@@ -124,10 +139,10 @@ static void window_load(Window *window) {
   s_day_label = text_layer_create(GRect(88, -3, 50, 16));
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
 #endif
-  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
-  text_layer_set_text_color(s_day_label, GColorBlack);
+  text_layer_set_text_color(s_day_label, text_color);
   layer_add_child(s_hands_layer, text_layer_get_layer(s_day_label));
 
   // Missing phone
@@ -164,25 +179,27 @@ static void tick_subscribe() {
 }
 
 static void init() {  
+  // Pick out a color
+#ifdef PBL_COLOR
+  uint32_t argb = 0;
+  while (argb == 0) {
+    argb = rand() % 0b00111111;
+  }
+  accent_color = (GColor8){ .argb = argb + 0b11000000 };
+  text_color = visible_against(accent_color);
+#else
+  accent_color = GColorWhite;
+  text_color = GColorBlack;
+#endif
+  
+  s_day_buffer[0] = '\0';
+
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
   });
   window_stack_push(window, true);
-
-  s_day_buffer[0] = '\0';
-  
-  // Pick out a color
-#ifdef PBL_COLOR
-  uint32_t argb = 0;
-  while ((argb == 0) || (argb == 0x000001)) {
-    argb = rand() % 0b00111111;
-  }
-  accent_color = (GColor8){ .argb = argb + 0b11000000 };
-#else
-  accent_color = GColorWhite;
-#endif
 
   Layer *window_layer = window_get_root_layer(window);
   display_bounds = layer_get_bounds(window_layer);
