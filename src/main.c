@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 #define HAND_OUT 200
-#define HAND_IN 50
+#define HAND_IN 45
 #define MINUTE_WIDTH 10
 #define HOUR_WIDTH 12
 #define BORDER_WIDTH PBL_IF_ROUND_ELSE(16, 12)
@@ -176,7 +176,7 @@ static void init() {
   // Pick out a color
 #ifdef PBL_COLOR
   uint32_t argb = 0;
-  while (argb == 0) {
+  while ((argb == 0) || (argb == 0x000001)) {
     argb = rand() % 0b00111111;
   }
   accent_color = (GColor8){ .argb = argb + 0b11000000 };
