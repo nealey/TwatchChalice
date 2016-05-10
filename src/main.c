@@ -4,7 +4,7 @@
 #define HAND_IN 50
 #define MINUTE_WIDTH 10
 #define HOUR_WIDTH 12
-#define BORDER_WIDTH 12
+#define BORDER_WIDTH PBL_IF_ROUND_ELSE(16, 12)
 #define HBW (BORDER_WIDTH / 2)
 
 static Window *window;
@@ -60,6 +60,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
                      point_of_polar(TRIG_MAX_ANGLE * t->tm_min / 60, HAND_OUT));
 
   // border
+#ifdef PBL_ROUND
+  GRect frame = grect_inset(display_bounds, GEdgeInsets(0));
+  graphics_context_set_fill_color(ctx, accent_color);
+  graphics_fill_radial(ctx, frame, GOvalScaleModeFitCircle, BORDER_WIDTH, DEG_TO_TRIGANGLE(0), DEG_TO_TRIGANGLE(360));
+#else
   graphics_context_set_stroke_width(ctx, BORDER_WIDTH);
   GPoint a;
   a.x = display_bounds.origin.x + HBW;
@@ -83,6 +88,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
     graphics_draw_line(ctx, a, b);
     a = b;
   }
+#endif
 
   strftime(s_day_buffer, sizeof(s_day_buffer), "%d %b", t);
   if (b[0] == '0') {
@@ -112,13 +118,13 @@ static void window_load(Window *window) {
  
   // Day
 #ifdef PBL_ROUND
-  s_day_label = text_layer_create(GRect(75, 75, 30, 24));
+  s_day_label = text_layer_create(GRect(65, 0, 50, 24));
+  text_layer_set_text_alignment(s_day_label, GTextAlignmentCenter);
 #else
-  //s_day_label = text_layer_create(GRect(92, 152, 50, 16));
   s_day_label = text_layer_create(GRect(88, -3, 50, 16));
+  text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
 #endif
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
   text_layer_set_text_color(s_day_label, GColorBlack);
@@ -133,7 +139,7 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_bt_label, GTextAlignmentCenter);
   text_layer_set_text(s_bt_label, "");
   text_layer_set_background_color(s_bt_label, GColorClear);
-  text_layer_set_text_color(s_bt_label, GColorDarkGray);
+  text_layer_set_text_color(s_bt_label, COLOR_FALLBACK(GColorDarkGray, GColorWhite));
   text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_64)));
   layer_add_child(s_bg_layer, text_layer_get_layer(s_bt_label));
 }
@@ -168,8 +174,15 @@ static void init() {
   s_day_buffer[0] = '\0';
   
   // Pick out a color
-  accent_color = (GColor8){ .argb = ((rand() % 0b00111111) + 0b11000000)};
-  //accent_color = GColorVividCerulean;
+#ifdef PBL_COLOR
+  uint32_t argb = 0;
+  while (argb == 0) {
+    argb = rand() % 0b00111111;
+  }
+  accent_color = (GColor8){ .argb = argb + 0b11000000 };
+#else
+  accent_color = GColorWhite;
+#endif
 
   Layer *window_layer = window_get_root_layer(window);
   display_bounds = layer_get_bounds(window_layer);

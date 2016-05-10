@@ -10,7 +10,7 @@
     "resources": {
         "media": [
             {
-                "file": "images/icon",
+                "file": "images/icon.png",
                 "menuIcon": true,
                 "name": "IMAGE_ICON",
                 "targetPlatforms": null,
@@ -29,10 +29,11 @@
     "shortName": "Chalice",
     "targetPlatforms": [
         "aplite",
-        "basalt"
+        "basalt",
+        "chalk"
     ],
     "uuid": "f00033b1-2e6c-490c-a650-99d9399b2163",
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }
