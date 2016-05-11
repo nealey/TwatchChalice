@@ -20,20 +20,6 @@ GPoint center;
 
 bool bt_connected;
 
-static GColor8 visible_against(GColor8 bg) {
-  uint8_t r = (bg.argb >> 4) & 0b11;
-  uint8_t g = (bg.argb >> 2) & 0b11;
-  uint8_t b = (bg.argb >> 0) & 0b11;
-  uint16_t a = (299*r + 587*g + 114*b);
-  
-  // Counting the perceptive luminance - human eye favors green color... 
-  if (a < 1500) {
-    return GColorWhite;
-  } else {
-    return GColorBlack;
-  }
-}
-
 static GPoint point_of_polar(int32_t theta, int r) {
   GPoint ret = {
     .x = (int16_t)(sin_lookup(theta) * r / TRIG_MAX_RATIO) + center.x,
@@ -186,11 +172,10 @@ static void init() {
     argb = rand() % 0b00111111;
   }
   accent_color = (GColor8){ .argb = argb + 0b11000000 };
-  text_color = visible_against(accent_color);
 #else
   accent_color = GColorWhite;
-  text_color = GColorBlack;
 #endif
+  text_color = gcolor_legible_over(accent_color);
   
   s_day_buffer[0] = '\0';
 
