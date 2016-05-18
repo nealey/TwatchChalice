@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "settings.h"
 
 #define HAND_OUT 200
 #define HAND_IN 45
@@ -10,8 +11,9 @@
 static Window *window;
 static Layer *s_bg_layer, *s_hands_layer;
 static TextLayer *s_day_label, *s_bt_label;
+static GColor face_color;
 static GColor accent_color;
-static GColor text_color;
+static GColor hand_color;
 
 static char s_day_buffer[15];
 
@@ -30,8 +32,8 @@ static GPoint point_of_polar(int32_t theta, int r) {
 }
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
-  // Draw Background, which is just blackness
-  graphics_context_set_fill_color(ctx, GColorBlack);
+  // Draw Background, which is just a solid color
+  graphics_context_set_fill_color(ctx, face_color);
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   
   if (bt_connected) {
@@ -48,7 +50,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   
   // hour hand
   graphics_context_set_stroke_width(ctx, HOUR_WIDTH);
-  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, hand_color);
   graphics_draw_line(ctx,
                      point_of_polar(TRIG_MAX_ANGLE * (t->tm_hour % 12) / 12, HAND_IN),
                      point_of_polar(TRIG_MAX_ANGLE * (t->tm_hour % 12) / 12, HAND_OUT));
@@ -103,6 +105,27 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(s_hands_layer);
 }
 
+static void set_colors() {
+  face_color = settings_get_color(KEY_COLOR_FACE);
+  layer_mark_dirty(s_bg_layer);
+  
+#ifdef PBL_COLOR
+  do {
+    uint8_t argb = rand() % 0b00111111;
+    accent_color = (GColor8){ .argb = argb | 0b11000000 };
+  } while (gcolor_equal(accent_color, face_color));
+#else
+  accent_color = gcolor_legible_over(face_color);
+#endif
+  hand_color = gcolor_legible_over(face_color);
+  layer_mark_dirty(s_hands_layer);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Holy crap! Colors are %06x and %06x!", face_color.argb, accent_color.argb);
+
+  text_layer_set_text_color(s_day_label, gcolor_legible_over(accent_color));
+  text_layer_set_text_color(s_bt_label, gcolor_legible_over(face_color));
+}
+
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
@@ -115,7 +138,7 @@ static void window_load(Window *window) {
   // Hands
   s_hands_layer = layer_create(bounds);
   layer_set_update_proc(s_hands_layer, hands_update_proc);
-  layer_add_child(window_layer, s_hands_layer);
+  layer_add_child(s_bg_layer, s_hands_layer);
  
   // Day
 #ifdef PBL_ROUND
@@ -128,7 +151,6 @@ static void window_load(Window *window) {
   text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
-  text_layer_set_text_color(s_day_label, text_color);
   layer_add_child(s_hands_layer, text_layer_get_layer(s_day_label));
 
   // Missing phone
@@ -140,9 +162,10 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(s_bt_label, GTextAlignmentCenter);
   text_layer_set_text(s_bt_label, "");
   text_layer_set_background_color(s_bt_label, GColorClear);
-  text_layer_set_text_color(s_bt_label, COLOR_FALLBACK(GColorDarkGray, GColorWhite));
   text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_64)));
   layer_add_child(s_bg_layer, text_layer_get_layer(s_bt_label));
+  
+  set_colors();
 }
 
 static void window_unload(Window *window) {
@@ -166,16 +189,8 @@ static void tick_subscribe() {
 
 static void init() {  
   // Pick out a color
-#ifdef PBL_COLOR
-  uint32_t argb = 0;
-  while (argb == 0) {
-    argb = rand() % 0b00111111;
-  }
-  accent_color = (GColor8){ .argb = argb + 0b11000000 };
-#else
-  accent_color = GColorWhite;
-#endif
-  text_color = gcolor_legible_over(accent_color);
+  face_color = GColorBlack;
+  
   
   s_day_buffer[0] = '\0';
 
@@ -194,6 +209,8 @@ static void init() {
   
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
+  
+  settings_init(set_colors);
 }
 
 static void deinit() {

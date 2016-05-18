@@ -1,7 +1,9 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "color-face": 0
+    },
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "dartcatcher@gmail.com",
     "enableMultiJS": true,
@@ -33,7 +35,7 @@
         "chalk"
     ],
     "uuid": "f00033b1-2e6c-490c-a650-99d9399b2163",
-    "versionLabel": "1.2",
+    "versionLabel": "1.3",
     "watchapp": {
         "watchface": true
     }
