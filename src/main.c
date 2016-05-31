@@ -2,10 +2,10 @@
 #include "settings.h"
 
 #define HAND_OUT 200
-#define HAND_IN 45
+#define HAND_IN 40
 #define MINUTE_WIDTH 10
 #define HOUR_WIDTH 12
-#define BORDER_WIDTH PBL_IF_ROUND_ELSE(16, 12)
+#define BORDER_WIDTH PBL_IF_ROUND_ELSE(20, 16)
 #define HBW (BORDER_WIDTH / 2)
 
 static Window *window;
@@ -93,7 +93,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   }
 #endif
 
-  strftime(s_day_buffer, sizeof(s_day_buffer), "%d %b", t);
+  strftime(s_day_buffer, sizeof(s_day_buffer), "%e %b", t);
   if (b[0] == '0') {
     b += 1;
   }
@@ -120,8 +120,6 @@ static void set_colors() {
   hand_color = gcolor_legible_over(face_color);
   layer_mark_dirty(s_hands_layer);
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Holy crap! Colors are %06x and %06x!", face_color.argb, accent_color.argb);
-
   text_layer_set_text_color(s_day_label, gcolor_legible_over(accent_color));
   text_layer_set_text_color(s_bt_label, gcolor_legible_over(face_color));
 }
@@ -145,10 +143,10 @@ static void window_load(Window *window) {
   s_day_label = text_layer_create(GRect(65, 0, 50, 24));
   text_layer_set_text_alignment(s_day_label, GTextAlignmentCenter);
 #else
-  s_day_label = text_layer_create(GRect(88, -3, 50, 16));
+  s_day_label = text_layer_create(GRect(2, -4, 50, 24));
   text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
 #endif
-  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
   layer_add_child(s_hands_layer, text_layer_get_layer(s_day_label));
