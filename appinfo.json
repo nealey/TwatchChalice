@@ -1,6 +1,7 @@
 {
     "appKeys": {
-        "color-face": 0
+        "color-face": 0,
+        "int-style": 1
     },
     "capabilities": [
         "configurable"

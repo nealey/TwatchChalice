@@ -1,11 +1,14 @@
 #include <pebble.h>
 #include "settings.h"
 
-#define HAND_OUT 200
-#define HAND_IN 40
-#define MINUTE_WIDTH 10
-#define HOUR_WIDTH 12
-#define BORDER_WIDTH PBL_IF_ROUND_ELSE(20, 16)
+static int HAND_OUT = 200;
+static int HAND_IN = 40;
+static int MINUTE_WIDTH = 10;
+static int HOUR_WIDTH = 12;
+static int BORDER_WIDTH_BASE = 14;
+static int FONT_SIZE = 16;
+
+#define BORDER_WIDTH (BORDER_WIDTH_BASE + PBL_IF_ROUND_ELSE(4, 0))
 #define HBW (BORDER_WIDTH / 2)
 
 static Window *window;
@@ -93,7 +96,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   }
 #endif
 
-  strftime(s_day_buffer, sizeof(s_day_buffer), "%e %b", t);
+  strftime(s_day_buffer, sizeof(s_day_buffer), "%d %b", t);
   if (b[0] == '0') {
     b += 1;
   }
@@ -105,7 +108,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(s_hands_layer);
 }
 
-static void set_colors() {
+static void set_configurables() {
   face_color = settings_get_color(KEY_COLOR_FACE);
   layer_mark_dirty(s_bg_layer);
   
@@ -122,6 +125,26 @@ static void set_colors() {
 
   text_layer_set_text_color(s_day_label, gcolor_legible_over(accent_color));
   text_layer_set_text_color(s_bt_label, gcolor_legible_over(face_color));
+  
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Style: %ld", settings_get_int32(KEY_STYLE));
+  switch (settings_get_int32(KEY_STYLE)) {
+  case 1: // Thin style
+    HAND_IN = 45;
+    BORDER_WIDTH_BASE = 12;
+    MINUTE_WIDTH = 10;
+    HOUR_WIDTH = 12;
+    text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+    text_layer_set_text_alignment(s_day_label, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentRight));
+    break;
+  default:
+    HAND_IN = 40;
+    BORDER_WIDTH_BASE = 16;
+    MINUTE_WIDTH = 12;
+    HOUR_WIDTH = 14;
+    text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    text_layer_set_text_alignment(s_day_label, PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft));
+    break;
+  }
 }
 
 static void window_load(Window *window) {
@@ -139,14 +162,10 @@ static void window_load(Window *window) {
   layer_add_child(s_bg_layer, s_hands_layer);
  
   // Day
-#ifdef PBL_ROUND
-  s_day_label = text_layer_create(GRect(65, 0, 50, 24));
-  text_layer_set_text_alignment(s_day_label, GTextAlignmentCenter);
-#else
-  s_day_label = text_layer_create(GRect(2, -4, 50, 24));
-  text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
-#endif
-  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  s_day_label = text_layer_create(GRect(bounds.origin.x + 3, 
+                                        PBL_IF_ROUND_ELSE(0, -4), 
+                                        bounds.size.w - 6,
+                                        24));
   text_layer_set_text(s_day_label, s_day_buffer);
   text_layer_set_background_color(s_day_label, GColorClear);
   layer_add_child(s_hands_layer, text_layer_get_layer(s_day_label));
@@ -163,7 +182,7 @@ static void window_load(Window *window) {
   text_layer_set_font(s_bt_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SYMBOLS_64)));
   layer_add_child(s_bg_layer, text_layer_get_layer(s_bt_label));
   
-  set_colors();
+  set_configurables();
 }
 
 static void window_unload(Window *window) {
@@ -208,7 +227,7 @@ static void init() {
   bluetooth_connection_service_subscribe(bt_handler);
   bt_connected = bluetooth_connection_service_peek();
   
-  settings_init(set_colors);
+  settings_init(set_configurables);
 }
 
 static void deinit() {

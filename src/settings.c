@@ -11,6 +11,14 @@ GColor settings_get_color(MessageKey key) {
   return GColorFromHEX(persist_read_int(key));
 }
 
+int32_t settings_get_int32(MessageKey key) {
+  if (! persist_exists(key)) {
+    return 0;
+  }
+  
+  return persist_read_int(key);
+}
+
 static void in_received_handler(DictionaryIterator *rec, void *context) {
   int i;
   
@@ -21,12 +29,8 @@ static void in_received_handler(DictionaryIterator *rec, void *context) {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "Holy crap! Key %i isn't around!", i);
       continue;
     }
-    
-    switch (i) {
-    case KEY_COLOR_FACE:
-      persist_write_int(i, cur->value->int32);
-      break;
-    }
+
+    persist_write_int(i, cur->value->int32);
   }
   
   callback();
