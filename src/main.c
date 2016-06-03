@@ -25,6 +25,25 @@ GPoint center;
 
 bool bt_connected;
 
+static int32_t luminosity(GColor c) {
+  int r = (c.argb & 0b110000) >> 4;
+  int g = (c.argb & 0b001100) >> 2;
+  int b = (c.argb & 0b000011) >> 0;
+  
+  return (2126 * r) + (7152 * g) + (722 * b);
+}
+
+static bool visible_against(GColor a, GColor b) {
+  int32_t la = luminosity(a);
+  int32_t lb = luminosity(b);
+  
+  if ((la - lb > 15000) || (lb - la > 15000)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 static GPoint point_of_polar(int32_t theta, int r) {
   GPoint ret = {
     .x = (int16_t)(sin_lookup(theta) * r / TRIG_MAX_RATIO) + center.x,
@@ -116,7 +135,7 @@ static void set_configurables() {
   do {
     uint8_t argb = rand() % 0b00111111;
     accent_color = (GColor8){ .argb = argb | 0b11000000 };
-  } while (gcolor_equal(accent_color, face_color));
+  } while (! visible_against(accent_color, face_color));
 #else
   accent_color = gcolor_legible_over(face_color);
 #endif
