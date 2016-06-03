@@ -137,7 +137,7 @@ static void set_configurables() {
   switch (settings_get_int32(KEY_STYLE)) {
   case 1: // Thin style
     HAND_IN = 45;
-    BORDER_WIDTH_BASE = 12;
+    BORDER_WIDTH_BASE = 10;
     MINUTE_WIDTH = 10;
     HOUR_WIDTH = 12;
     text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));

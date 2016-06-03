@@ -23,6 +23,5 @@ Pebble.addEventListener("webviewclosed", function(e) {
   console.log("configuration closed");
   // webview closed
   var options = JSON.parse(decodeURIComponent(e.response));
-  options["int-style"] = Number(options["int-style"]);
   Pebble.sendAppMessage(options, appMessageAck, appMessageNak);
 });
