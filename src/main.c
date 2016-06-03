@@ -25,23 +25,11 @@ GPoint center;
 
 bool bt_connected;
 
-static int32_t luminosity(GColor c) {
-  int r = (c.argb & 0b110000) >> 4;
-  int g = (c.argb & 0b001100) >> 2;
-  int b = (c.argb & 0b000011) >> 0;
-  
-  return (2126 * r) + (7152 * g) + (722 * b);
-}
-
 static bool visible_against(GColor a, GColor b) {
-  int32_t la = luminosity(a);
-  int32_t lb = luminosity(b);
+  GColor na = gcolor_legible_over(a);
+  GColor nb = gcolor_legible_over(b);
   
-  if ((la - lb > 15000) || (lb - la > 15000)) {
-    return true;
-  } else {
-    return false;
-  }
+  return (! gcolor_equal(na, nb));
 }
 
 static GPoint point_of_polar(int32_t theta, int r) {
